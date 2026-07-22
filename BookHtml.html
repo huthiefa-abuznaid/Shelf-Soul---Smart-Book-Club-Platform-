@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelf & Soul — Smart Book Club</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <p class="site-eyebrow">COM4381 · Web Services Technologies · Project 1</p>
+  <h1>Shelf <em>&</em> Soul</h1>
+  <p class="site-sub">A Smart Book Club Platform powered by RESTful APIs</p>
+  <div class="api-badges">
+    <span class="badge">OpenLibrary API</span>
+    <span class="badge">DummyJSON API</span>
+    <span class="badge">Open-Meteo API</span>
+    <span class="badge">Gemini AI API</span>
+  </div>
+</header>
+
+<main>
+  <section class="search-section">
+    <label class="search-label" for="search-input">
+      Search for a <span>Book or Author</span>
+    </label>
+    <div class="search-row">
+      <input id="search-input" type="text" placeholder="Enter a book title or author" autocomplete="off" />
+      <button id="search-btn">Search →</button>
+    </div>
+    <div id="status-bar" class="status-bar"></div>
+  </section>
+
+  <section id="results-section" style="display:none;">
+    <h2 class="section-title">Search Results</h2>
+    <div id="books-grid" class="books-grid"></div>
+  </section>
+
+  <section id="detail-section" style="display:none;">
+    <h2 class="section-title">Book Details</h2>
+    <div id="detail-content"></div>
+    <div class="api-sources">
+      <span class="api-pill" id="pill-ol">OpenLibrary Search</span>
+      <span class="api-pill" id="pill-details">OpenLibrary Works</span>
+      <span class="api-pill" id="pill-ai">Gemini AI</span>
+    </div>
+  </section>
+
+  <section id="quotes-section" style="display:none;">
+    <h2 class="section-title">Daily Inspiration</h2>
+    <div id="quotes-grid" class="quotes-grid"></div>
+    <div class="api-sources" style="margin-top: 1.5rem;">
+      <span class="api-pill" id="pill-quotes">DummyJSON Quotes</span>
+    </div>
+  </section>
+
+  <section class="events-section">
+    <h2 class="section-title">Club Events & Invitations</h2>
+    
+    <div class="events-grid">
+      <div class="book-card" style="cursor: default; flex-direction: column; align-items: center; text-align: center;">
+        <h3 style="color: var(--cream); font-family: 'Playfair Display'; margin-bottom: 1rem;">Birzeit Campus Weather</h3>
+        <div id="weather-content">
+          <span class="spinner"></span> Fetching live weather...
+        </div>
+        <div class="api-sources" style="margin-top: auto; padding-top: 1rem;">
+          <span class="api-pill active">Open-Meteo API</span>
+        </div>
+      </div>
+
+      <div class="book-card" style="cursor: default; flex-direction: column; width: 100%;">
+        <h3 style="color: var(--cream); font-family: 'Playfair Display'; margin-bottom: 1rem;">Schedule Meeting</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; width: 100%;">
+          <input id="host-name" type="text" value="" placeholder="Host / Presenter Name" style="font-size: 0.9rem; padding: 0.6rem;" />
+          <input id="meeting-date" type="datetime-local" style="font-size: 0.9rem; padding: 0.6rem;" />
+          
+          <select id="meeting-type" style="font-size: 0.9rem; padding: 0.6rem;">
+            <option value="online">Online Meeting (Zoom / Meet)</option>
+            <option value="in-person">In-Person Meeting </option>
+          </select>
+
+          <div id="online-input-group" style="width: 100%;">
+            <input id="zoom-link" type="url" placeholder="Meeting Link (https://...)" style="font-size: 0.9rem; padding: 0.6rem; width: 100%;" />
+          </div>
+
+          <div id="inperson-input-group" style="display: none; width: 100%;">
+            <input id="location-input" type="text" placeholder="Location (e.g., Ramallah Cafe, Birzeit Library...)" style="font-size: 0.9rem; padding: 0.6rem; width: 100%;" />
+          </div>
+
+          <button id="generate-ticket-btn" style="width: 100%; padding: 0.6rem;">Generate Meeting Card</button>
+        </div>
+      </div>
+    </div> 
+
+    <div id="ticket-container" class="ticket-container">
+      <div class="vip-ticket">
+        <div class="ticket-header" id="tkt-title">Birzeit Book Club Meeting</div>
+        
+        <div class="ticket-row">
+          <div>
+            <div class="ticket-label">Presenter (Host)</div>
+            <div class="ticket-value" id="tkt-host">Suhaib Ewidat</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="ticket-label">Book Discussion</div>
+            <div class="ticket-value" id="tkt-book" style="color: var(--gold); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Select a Book First</div>
+          </div>
+        </div>
+
+        <div class="ticket-row" style="margin-top: 1rem;">
+          <div>
+            <div class="ticket-label">Date & Time</div>
+            <div class="ticket-value" id="tkt-date">---</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="ticket-label" id="tkt-location-label">Location / Link</div>
+            <div class="ticket-value" id="tkt-link">---</div>
+          </div>
+        </div>
+
+        <div class="barcode">||| |||| || ||| |||| ||</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Birzeit University · COM4381 ·
+  APIs: <a href="https://openlibrary.org/developers" target="_blank">OpenLibrary</a> ·
+  <a href="https://dummyjson.com/docs/quotes" target="_blank">DummyJSON</a> ·
+  <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> ·
+  <a href="https://aistudio.google.com/" target="_blank">Gemini AI Studio</a>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
