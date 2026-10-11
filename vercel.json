@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "api/summary.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/summary",
+      "dest": "/api/summary.js"
+    },
+    {
+      "handle": "filesystem"
+    }
+  ]
+}
