@@ -12,7 +12,7 @@
 const APIS = {
   openLibrary:  'https://openlibrary.org',
   quotes:       'https://dummyjson.com/quotes/random/4',
-  weather:      'https://api.open-meteo.com/v1/forecast?latitude=31.96&longitude=35.18&current_weather=true',
+  weather:      'https://api.open-meteo.com/v1/forecast?latitude=31.96&longitude=35.18&current=temperature_2m,wind_speed_10m,weather_code',
   geminiUrl:    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
   geminiKey:    'AQ.Ab8RN6LWgDd4YVT5f3X9fkm90XVnHy4KHSx4JegYptnoC93_TA' 
 };
@@ -75,7 +75,6 @@ window.generateSummary = async function(title, author) {
   try {
     const prompt = `لخص كتاب "${title}" للمؤلف "${author}" في فقرة واحدة قصيرة ومفيدة باللغة العربية، موجهة لأعضاء نادي قراءة.`;
     
-    // استخدام الرابط المعرف في APIS مع إضافة الـ API Key
     const url = `${APIS.geminiUrl}?key=${API_KEY.trim()}`;     
     
     const response = await fetch(url, {
@@ -112,18 +111,23 @@ window.generateSummary = async function(title, author) {
 async function loadWeather() {
   try {
     const res = await axios.get(APIS.weather);
-    const data = res.data.current_weather;
+    const current = res.data.current || res.data.current_weather;
     
+    const temp = current ? (current.temperature_2m ?? current.temperature) : '--';
+    const wind = current ? (current.wind_speed_10m ?? current.windspeed) : '--';
+    const code = current ? (current.weather_code ?? current.weathercode) : 0;
+
     let weatherIcon = '☀️';
-    if(data.weathercode > 1 && data.weathercode <= 3) weatherIcon = '⛅';
-    if(data.weathercode >= 51) weatherIcon = '🌧️';
+    if (code > 1 && code <= 3) weatherIcon = '⛅';
+    if (code >= 51) weatherIcon = '🌧️';
 
     document.getElementById('weather-content').innerHTML = `
       <div style="font-size: 3.5rem; margin: 0.5rem 0; line-height: 1;">${weatherIcon}</div>
-      <div style="font-size: 2rem; color: var(--gold); font-family: 'JetBrains Mono';">${data.temperature}°C</div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Wind: ${data.windspeed} km/h</p>
+      <div style="font-size: 2rem; color: var(--gold); font-family: 'JetBrains Mono';">${temp}°C</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Wind: ${wind} km/h</p>
     `;
   } catch (error) {
+    console.error(error);
     document.getElementById('weather-content').innerHTML = `<p style="color: #c0614e;">Weather API Error</p>`;
   }
 }
@@ -240,4 +244,48 @@ window.selectBook = async function(cardEl) {
 
     detailContent.innerHTML = `
       <div class="detail-grid">
-        ${cover ? `<img class="detail-cover" src="${cover}">` : `<div class="detail-cover-placeholder">📚
+        ${cover ? `<img class="detail-cover" src="${cover}">` : `<div class="detail-cover-placeholder">📚</div>`}
+        <div>
+          <div class="detail-title">${esc(title)}</div>
+          <div class="detail-author">by ${esc(author)}</div>
+          <p class="detail-description">${esc(description)}</p>
+          
+          <div style="margin-top: 1.5rem; padding: 1rem; border: 1px dashed rgba(201,168,76,0.3); border-radius: var(--radius); background: rgba(201,168,76,0.03);">
+            <button id="generate-summary-btn" onclick="generateSummary('${esc(title)}', '${esc(author)}')" style="font-size: 0.8rem; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+              ✨ Generate AI Summary (Gemini)
+            </button>
+            <div id="ai-summary-text" style="font-size: 0.95rem; color: var(--cream); display: none; line-height: 1.6; margin-top: 0.5rem;"></div>
+          </div>
+        </div>
+      </div>`;
+
+    quotesSection.style.display = 'block'; quotesGrid.innerHTML = `<p class="empty-state"><span class="spinner"></span> Loading inspiration...</p>`;
+    const quotesData = await fetchQuotes(); 
+    if(pillQuotes) pillQuotes.classList.add('active');
+    if (quotesData && quotesData.length > 0) {
+      quotesGrid.innerHTML = quotesData.map((q, i) => `<div class="quote-card" style="animation-delay:${i*80}ms"><p class="quote-text">${esc(q.quote)}</p><p class="quote-attribution">— ${esc(q.author)}</p></div>`).join('');
+    }
+  } catch (err) { detailContent.innerHTML = `<p class="empty-state" style="color: #c0614e;">Error: ${esc(err.message)}</p>`; }
+}
+
+async function handleSearch() {
+  const query = inputEl.value.trim(); if (!query) return setStatus('⚠ Please enter a book title.', 'error');
+  
+  setStatus('<span class="spinner"></span> Searching...', 'info'); searchBtn.disabled = true;
+  resultsSection.style.display = 'none'; detailSection.style.display = 'none'; quotesSection.style.display = 'none';
+  currentSelectedBook = null; 
+  
+  try {
+    const docs = await searchBooks(query); setStatus(`Found ${docs.length} result(s).`, 'info');
+    renderBookCards(docs); resultsSection.style.display = 'block';
+  } catch (err) { setStatus(`Error: ${err.message}.`, 'error'); } finally { searchBtn.disabled = false; }
+}
+
+/* ─── Event Listeners & Init ─── */
+if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+if (inputEl) inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSearch(); });
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (inputEl) inputEl.value = ''; 
+  loadWeather(); 
+});
