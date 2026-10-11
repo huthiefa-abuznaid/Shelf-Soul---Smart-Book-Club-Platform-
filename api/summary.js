@@ -14,32 +14,24 @@ export default async function handler(req, res) {
   try {
     const prompt = `لخص كتاب "${title}" للمؤلف "${author}" في فقرة واحدة قصيرة ومفيدة باللغة العربية، موجهة لأعضاء نادي قراءة.`;
     
-    // تجربة النموذج الأساسي، وإذا لم يتوفر يتم استخدام اسم آخر شائع
-    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.5-flash'];
-    let lastError = null;
+    // استخدام النموذج الموصى به من API مباشرة
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`;
 
-    for (const model of modelsToTry) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
+    const data = await response.json();
 
-      const data = await response.json();
-
-      if (response.ok) {
-        return res.status(200).json(data);
-      }
-
-      lastError = data.error?.message || `HTTP Error ${response.status}`;
+    if (!response.ok) {
+      throw new Error(data.error?.message || `HTTP Error ${response.status}`);
     }
 
-    throw new Error(lastError);
-
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
