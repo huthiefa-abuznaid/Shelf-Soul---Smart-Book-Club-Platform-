@@ -1,6 +1,6 @@
 // api/summary.js — Vercel Serverless Function
 export default async function handler(req, res) {
-  // قبول طلبات POST فقط
+  // استقبال طلبات POST فقط
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -11,11 +11,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing title or author' });
   }
 
-  // قراءة المفتاح من متغيرات البيئة بآمان
+  // قراءة المفتاح بأمان من متغيرات البيئة في Vercel (GEMINI_API_KEY)
   const API_KEY = process.env.GEMINI_API_KEY;
 
   if (!API_KEY) {
-    return res.status(500).json({ error: 'Gemini API Key is not configured on the server.' });
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not defined in Vercel Environment Variables.' });
   }
 
   try {
@@ -24,7 +24,9 @@ export default async function handler(req, res) {
 
     const response = await fetch(geminiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
@@ -38,7 +40,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Gemini API Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
