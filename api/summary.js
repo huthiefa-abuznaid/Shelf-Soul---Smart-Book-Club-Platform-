@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   try {
     const prompt = `لخص كتاب "${title}" للمؤلف "${author}" في فقرة واحدة قصيرة ومفيدة باللغة العربية، موجهة لأعضاء نادي قراءة.`;
     
-    // استخدام v1 ونموذج gemini-2.5-flash أو gemini-1.5-flash المستقر
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    // استخدام النموذج المستقر المعتمد gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -28,7 +28,6 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      // إرجاع رسالة الخطأ المفصلة إن وجدت
       throw new Error(data.error?.message || `HTTP Error ${response.status}`);
     }
 
