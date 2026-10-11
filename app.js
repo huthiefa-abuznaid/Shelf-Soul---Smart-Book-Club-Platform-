@@ -13,8 +13,8 @@ const APIS = {
   openLibrary:  'https://openlibrary.org',
   quotes:       'https://dummyjson.com/quotes/random/4',
   weather:      'https://api.open-meteo.com/v1/forecast?latitude=31.96&longitude=35.18&current_weather=true',
-  geminiUrl:    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
-  geminiKey:    'AIzaSyCB9lFxDueWbbrrFkEUQqLJnUzKL_1vKlU' 
+  geminiUrl:    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+  geminiKey:    'AQ.Ab8RN6LWgDd4YVT5f3X9fkm90XVnHy4KHSx4JegYptnoC93_TA' 
 };
 
 /* ─── Global State ─── */
