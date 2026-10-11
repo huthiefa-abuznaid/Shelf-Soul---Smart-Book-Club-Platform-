@@ -14,18 +14,14 @@ export default async function handler(req, res) {
   try {
     const prompt = `لخص كتاب "${title}" للمؤلف "${author}" في فقرة واحدة قصيرة ومفيدة باللغة العربية، موجهة لأعضاء نادي قراءة.`;
     
-    // استخدام Interactions API المعتمد حديثاً من Google
-    const url = `https://generativelanguage.googleapis.com/v1beta/interactions`;
+    // استخدام النموذج المطلوب والمتاح حالياً gemini-3.8-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': API_KEY
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
-        input: prompt
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
@@ -35,18 +31,7 @@ export default async function handler(req, res) {
       throw new Error(data.error?.message || `HTTP Error ${response.status}`);
     }
 
-    // إرجاع النص الملخص بنفس الهيكل المتوافق مع التطبيق
-    const summaryText = data.output_text || data.text || (data.candidates && data.candidates[0]?.content?.parts[0]?.text);
-
-    return res.status(200).json({
-      candidates: [
-        {
-          content: {
-            parts: [{ text: summaryText }]
-          }
-        }
-      ]
-    });
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
