@@ -1,5 +1,12 @@
 /**
  * Smart Book Club Platform — API Client
+ * 
+ * APIs:
+ * 1. OpenLibrary Search  — GET search.json (To search for books)
+ * 2. OpenLibrary Works   — GET {key}.json (To fetch specific book details)
+ * 3. DummyJSON Quotes    — GET /quotes/random/4 (To fetch random quotes)
+ * 4. Open-Meteo Weather  — GET /forecast (To fetch Birzeit weather)
+ * 5. Gemini AI Summary   — POST /api/summary (Secure Serverless Function)
  */
 
 // 1. Grouping API URLs in a single Object
@@ -59,7 +66,7 @@ async function fetchQuotes() {
   return res.data;
 }
 
-/* ─── AI Summarization Function (Secure Backend Route) ─── */
+/* ─── AI Summarization Function (Secure Call via /api/summary) ─── */
 window.generateSummary = async function(title, author) {
   const btn = document.getElementById('generate-summary-btn');
   const textDiv = document.getElementById('ai-summary-text');
@@ -71,7 +78,7 @@ window.generateSummary = async function(title, author) {
   textDiv.style.display = 'none';
 
   try {
-    // الاتصال بالـ Serverless Function الخاصة بك على Vercel بدلاً من الاتصال المباشر بجوجل
+    // إرسال الطلب إلى Serverless Function بدلاً من الاتصال المباشر بمفتاح محظور
     const response = await fetch('/api/summary', {
       method: 'POST',
       headers: {
@@ -87,7 +94,7 @@ window.generateSummary = async function(title, author) {
     }
 
     const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No summary available.';
-    
+
     textDiv.style.display = 'block';
     textDiv.innerHTML = `<strong style="color: var(--gold);">Gemini Summary:</strong><br>` + esc(summary).replace(/\n/g, '<br>');
     btn.style.display = 'none'; 
@@ -236,17 +243,17 @@ window.selectBook = async function(cardEl) {
   if (detailContent) detailContent.innerHTML = `<p class="empty-state"><span class="spinner"></span> Fetching details...</p>`;
   if (quotesSection) quotesSection.style.display = 'none'; 
 
-  if(pillOL) pillOL.classList.remove('active'); 
-  if(pillDetails) pillDetails.classList.remove('active'); 
-  if(pillQuotes) pillQuotes.classList.remove('active'); 
-  if(pillAI) pillAI.classList.remove('active');
+  if (pillOL) pillOL.classList.remove('active'); 
+  if (pillDetails) pillDetails.classList.remove('active'); 
+  if (pillQuotes) pillQuotes.classList.remove('active'); 
+  if (pillAI) pillAI.classList.remove('active');
   
   if (detailSection) detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
     const detailsData = await fetchBookDetails(key);
-    if(pillOL) pillOL.classList.add('active'); 
-    if(pillDetails) pillDetails.classList.add('active');
+    if (pillOL) pillOL.classList.add('active'); 
+    if (pillDetails) pillDetails.classList.add('active');
     
     let description = 'No description available for this specific edition.';
     if (detailsData.description) {
@@ -276,9 +283,9 @@ window.selectBook = async function(cardEl) {
     if (quotesGrid) quotesGrid.innerHTML = `<p class="empty-state"><span class="spinner"></span> Loading inspiration...</p>`;
     
     const quotesData = await fetchQuotes(); 
-    if(pillQuotes) pillQuotes.classList.add('active');
+    if (pillQuotes) pillQuotes.classList.add('active');
     
-    const quotesList = quotesData.quotes || quotesData; // تحسين جلب الاقتباسات حسب شكل الـ API
+    const quotesList = quotesData.quotes || quotesData;
     if (quotesGrid && Array.isArray(quotesList) && quotesList.length > 0) {
       quotesGrid.innerHTML = quotesList.map((q, i) => `<div class="quote-card" style="animation-delay:${i*80}ms"><p class="quote-text">${esc(q.quote)}</p><p class="quote-attribution">— ${esc(q.author)}</p></div>`).join('');
     }
